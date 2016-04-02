@@ -48,8 +48,11 @@
 
 static  int  iqState    = 0;
 static  int  iqRegister = IQ_VENDOR_ADDR;
+static  int  iqEnablePin = 0;
 
 static  iqTouchLedData  MyIqData;
+
+//#define ENABLE_PIN_DEBUG  PIN_PD3
 
 /*-----------------------------------------------------------------------------*/
 
@@ -82,18 +85,18 @@ iqGetCustomValue()
 /*-----------------------------------------------------------------------------*/
 
 void
-IqInit()
+IqInit( int enablePin )
 {
     int  i;
   
     for(i=0;i<sizeof(MyIqData.regData.buf);i++)
       MyIqData.regData.buf[i] = 0; 
   
-    memcpy(MyIqData.regData.named.version, "V1.01.00", 8);
+    memcpy(MyIqData.regData.named.version, "V1.02.00", 8);
     memcpy(MyIqData.regData.named.vendor,  "VEX IQ  ", 8);
     memcpy(MyIqData.regData.named.devid,   "228-3010        ", 16); // part number is device id
 
-    MyIqData.regData.named.status[0] = 1; // Version number touch led
+    MyIqData.regData.named.status[0] = 2; // Version number touch led
     MyIqData.regData.named.status[1] = 1; // 
     MyIqData.regData.named.status[2] = 3; // Touch LED
     MyIqData.regData.named.status[3] = 0; // device status
@@ -104,6 +107,88 @@ IqInit()
     MyIqData.red     = 0;
     MyIqData.green   = 0;
     MyIqData.blue    = 0;
+
+    // I2C enable pin from VexIQ
+    pinMode( enablePin, INPUT_PULLUP);
+    delay(1);
+    
+#ifdef ENABLE_PIN_DEBUG
+    pinMode(ENABLE_PIN_DEBUG, OUTPUT);
+    digitalWrite( ENABLE_PIN_DEBUG, 1 );
+#endif
+
+    // Save enable pin
+    iqEnablePin = enablePin;
+    
+    // Block waiting for I2C enable to be high
+    // Thsi can happen if the IQ is turned off when we are already powered
+    while( digitalRead( iqEnablePin ) == 0 )
+      ;
+
+    // Block until enabled
+    IqEnablePinInitialCheck();
+
+    // Switch over to default address
+    Wire.begin(IQ_DEFAULT_ADDRESS>>1);
+    // set twi slave address set TWGCE
+    TWAR = IQ_DEFAULT_ADDRESS | 1;
+                    
+    // Now attach interrupt
+    attachInterrupt(digitalPinToInterrupt( enablePin ), IqEnablePinInterrupt, FALLING);
+}
+
+/*-----------------------------------------------------------------------------*/
+/* wait for I2C enable to toggle                                               */
+/*-----------------------------------------------------------------------------*/
+void
+IqEnablePinInitialCheck()
+{
+    do
+        {
+        // Block waiting for I2C enable to change
+        while( digitalRead( iqEnablePin )  )
+            ;
+
+        } while( IqEnablePinDebounce() ); 
+}
+
+/*-----------------------------------------------------------------------------*/
+/* debounce I2C enable pin                                                     */
+/*-----------------------------------------------------------------------------*/
+int
+IqEnablePinDebounce()
+{
+    int debounce = 0;
+
+#ifdef ENABLE_PIN_DEBUG
+    digitalWrite( ENABLE_PIN_DEBUG, 0 );
+#endif
+
+    // simple debounce, arduino is slow so we don't use the loop from the MSP430 code
+    // two digital reads takes about 30uS on the 8MHz Pro I'm using
+    if( digitalRead( iqEnablePin ) )
+      debounce = 1;
+    if( digitalRead( iqEnablePin ) )
+      debounce = 1;
+
+#ifdef ENABLE_PIN_DEBUG
+    digitalWrite( ENABLE_PIN_DEBUG, 1 );
+#endif
+    return( debounce );
+}
+
+/*-----------------------------------------------------------------------------*/
+/* debounce I2C enable pin                                                     */
+/*-----------------------------------------------------------------------------*/
+void
+IqEnablePinInterrupt()
+{
+    if( !IqEnablePinDebounce() ) {
+      // join i2c bus with IQ_INITIAL_ADDRESS
+      Wire.begin(IQ_DEFAULT_ADDRESS>>1);       
+      // set twi slave address set TWGCE
+      TWAR = IQ_DEFAULT_ADDRESS | 1;
+    }
 }
 
 /*-----------------------------------------------------------------------------*/
@@ -189,15 +274,12 @@ IqI2CReceived( unsigned char c )
              
          // Reset detect part 3
          case  4:
-             if( c == 0x03 );
+             if( c == 0x03 )
                  {
                  printf("reset\n");
                  
                  // join i2c bus with DEFAULT_DEVICE
-                 Wire.begin(IQ_DEFAULT_DEVICE>>1); 
-                 
-                 // set twi slave address set TWGCE
-                 TWAR = IQ_DEFAULT_DEVICE | 1;
+                 Wire.begin(IQ_INITIAL_ADDRESS>>1); 
                  
                  // clear local data
                  MyIqData.initialized = 0;

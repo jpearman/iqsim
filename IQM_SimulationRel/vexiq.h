@@ -73,7 +73,8 @@ extern "C" {
 #define PIN_PC7     21
 
 
-#define IQ_DEFAULT_DEVICE   0x60
+#define IQ_DEFAULT_ADDRESS  0x60
+#define IQ_INITIAL_ADDRESS  0x62
 #define IQ_START_ADDRESS    0x20
 
 #define IQ_VERSION_ADDR     0x00
@@ -134,8 +135,11 @@ unsigned char  iqGetGreenValue(void);
 unsigned char  iqGetBlueValue(void);
 unsigned char  iqGetCustomValue(void);
 
-void           IqInit(void);
+void           IqInit(int enablePin);
 int            IqInitCheck(void);
+void           IqEnablePinInitialCheck(void);
+int            IqEnablePinDebounce(void);
+void           IqEnablePinInterrupt(void);
 
 void           IqI2CReceived( unsigned char c );
 int            IqI2CRequest(unsigned char *buf );

@@ -70,19 +70,18 @@ void setup()
 
      // The uart is the standard output device STDOUT.
      stdout = &uartout ;
- 
-     // Init the sensor simulation
-     IqInit();
-     Wire.begin(IQ_DEFAULT_DEVICE>>1);   // join i2c bus with DEFAULT_DEVICE
+     printf("VEX IQ Touch LED simulation\n");
+
+     // join i2c bus with IQ_INITIAL_ADDRESS
+     Wire.begin(IQ_INITIAL_ADDRESS>>1);   
      
-     // set twi slave address set TWGCE
-     TWAR = IQ_DEFAULT_DEVICE | 1;
+     // set the I2C callbacks
      Wire.onReceive(receiveEvent); // register event
      Wire.onRequest(requestEvent); // register event
-     
-     printf("VEX IQ Touch LED simulation\n");
-     printf("TWAR is %02X\n", TWAR);
 
+     // Init the sensor simulation
+     IqInit( PIN_PD2 );
+     
      // led on     
      digitalWrite( PIN_PB5, 0);     
 }
