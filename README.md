@@ -5,9 +5,9 @@ VEX IQ sensor simulation demo.
 
 Using Sparkfun Arduino Pro/328 8MHz/3.3v board
 
-I2C Wakeup pin is Digital IO 2 (PD2)
-SCK pin is A5
-SDA pin is A4
+I2C Wakeup pin is Digital IO 2 (PD2)  
+SCK pin is A5  
+SDA pin is A4  
 
 The Arduino bootloader takes many mS before it gives control to the user program, this means that an initial
 reset command from the IQ roughly 370mS after power on will be missed if it is the only device on the I2C bus.
