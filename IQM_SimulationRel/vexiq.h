@@ -12,6 +12,7 @@
 /*                                                                             */
 /*    Revisions:                                                               */
 /*                V1.00  5 March 2014 - First public release                   */
+/*                V1.01  3 April 2016 - Update for wakeup pulse                */
 /*                                                                             */
 /*-----------------------------------------------------------------------------*/
 /*                                                                             */
@@ -135,6 +136,7 @@ unsigned char  iqGetGreenValue(void);
 unsigned char  iqGetBlueValue(void);
 unsigned char  iqGetCustomValue(void);
 
+void           IqSetupI2C( int address );
 void           IqInit(int enablePin);
 int            IqInitCheck(void);
 void           IqEnablePinInitialCheck(void);

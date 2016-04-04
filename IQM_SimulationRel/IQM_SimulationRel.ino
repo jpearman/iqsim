@@ -12,6 +12,7 @@
 /*                                                                             */
 /*    Revisions:                                                               */
 /*                V1.00  5 March 2014 - First public release                   */
+/*                V1.01  3 April 2016 - Update for wakeup pulse                */
 /*                                                                             */
 /*-----------------------------------------------------------------------------*/
 /*                                                                             */
@@ -73,7 +74,7 @@ void setup()
      printf("VEX IQ Touch LED simulation\n");
 
      // join i2c bus with IQ_INITIAL_ADDRESS
-     Wire.begin(IQ_INITIAL_ADDRESS>>1);   
+     IqSetupI2C( IQ_INITIAL_ADDRESS );
      
      // set the I2C callbacks
      Wire.onReceive(receiveEvent); // register event

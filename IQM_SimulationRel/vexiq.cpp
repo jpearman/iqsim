@@ -12,6 +12,7 @@
 /*                                                                             */
 /*    Revisions:                                                               */
 /*                V1.00  5 March 2014 - First public release                   */
+/*                V1.01  3 April 2016 - Update for wakeup pulse                */
 /*                                                                             */
 /*-----------------------------------------------------------------------------*/
 /*                                                                             */
@@ -80,6 +81,18 @@ iqGetCustomValue()
 }
 
 /*-----------------------------------------------------------------------------*/
+/* Update I2C address and start as slave.                                      */
+/*-----------------------------------------------------------------------------*/
+void
+IqSetupI2C( int address )
+{
+    // Init I2C with address
+    Wire.begin(address>>1);
+    // set TWGCE
+    TWAR = address | 1;  
+}
+
+/*-----------------------------------------------------------------------------*/
 /* initialize the iq sensor data                                               */
 /* In this demo we are a touch LED                                             */
 /*-----------------------------------------------------------------------------*/
@@ -129,9 +142,7 @@ IqInit( int enablePin )
     IqEnablePinInitialCheck();
 
     // Switch over to default address
-    Wire.begin(IQ_DEFAULT_ADDRESS>>1);
-    // set twi slave address set TWGCE
-    TWAR = IQ_DEFAULT_ADDRESS | 1;
+    IqSetupI2C( IQ_DEFAULT_ADDRESS );
                     
     // Now attach interrupt
     attachInterrupt(digitalPinToInterrupt( enablePin ), IqEnablePinInterrupt, FALLING);
@@ -185,9 +196,7 @@ IqEnablePinInterrupt()
 {
     if( !IqEnablePinDebounce() ) {
       // join i2c bus with IQ_INITIAL_ADDRESS
-      Wire.begin(IQ_DEFAULT_ADDRESS>>1);       
-      // set twi slave address set TWGCE
-      TWAR = IQ_DEFAULT_ADDRESS | 1;
+      IqSetupI2C( IQ_DEFAULT_ADDRESS );
     }
 }
 
@@ -244,8 +253,7 @@ IqI2CReceived( unsigned char c )
          
          case  1:
              // change address
-             Wire.begin(c>>1);
-             TWAR = c | 1;
+             IqSetupI2C( c );
              printf("address changed to %02X\n", c);
 
              iqState = 0;
@@ -278,9 +286,9 @@ IqI2CReceived( unsigned char c )
                  {
                  printf("reset\n");
                  
-                 // join i2c bus with DEFAULT_DEVICE
-                 Wire.begin(IQ_INITIAL_ADDRESS>>1); 
-                 
+                 // join i2c bus with IQ_INITIAL_ADDRESS
+                 IqSetupI2C( IQ_INITIAL_ADDRESS );
+                       
                  // clear local data
                  MyIqData.initialized = 0;
                  }
