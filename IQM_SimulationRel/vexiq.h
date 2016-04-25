@@ -132,6 +132,7 @@ typedef struct _iqTouchLedData {
 } iqTouchLedData;
 
 unsigned char  iqGetRedValue(void);
+void           iqSetRedValue(int value);
 unsigned char  iqGetGreenValue(void);
 unsigned char  iqGetBlueValue(void);
 unsigned char  iqGetCustomValue(void);

@@ -13,6 +13,7 @@
 /*    Revisions:                                                               */
 /*                V1.00  5 March 2014 - First public release                   */
 /*                V1.01  3 April 2016 - Update for wakeup pulse                */
+/*                V1.02  25 April 2016 - Support for VS1053 autio shield       */
 /*                                                                             */
 /*-----------------------------------------------------------------------------*/
 /*                                                                             */
@@ -44,6 +45,7 @@
 #include <Wire.h>
 #include "pins_arduino.h"
 #include "vexiq.h"
+#include "vexiqaudio.h"
 
 // standard output for debug
 static FILE uartout = {0} ;
@@ -61,8 +63,8 @@ static int uart_putchar (char c, FILE *stream)
 
 void setup()
 {     
-     // standard arduino LED
-     pinMode(PIN_PB5, OUTPUT);
+     // standard arduino LED - now used by audio shield
+     //pinMode(PIN_PB5, OUTPUT);
 
      Serial.begin(19200);           // start serial for output
    
@@ -72,6 +74,9 @@ void setup()
      // The uart is the standard output device STDOUT.
      stdout = &uartout ;
      printf("VEX IQ Touch LED simulation\n");
+
+     // Init audio board
+     AudioInitialize();
 
      // join i2c bus with IQ_INITIAL_ADDRESS
      IqSetupI2C( IQ_INITIAL_ADDRESS );
@@ -84,20 +89,21 @@ void setup()
      IqInit( PIN_PD2 );
      
      // led on     
-     digitalWrite( PIN_PB5, 0);     
+     //digitalWrite( PIN_PB5, 0);
+
 }
 
 // 
 void loop()
 {
-    // turn on or off led based on the "special" register we are using
-    if( iqGetCustomValue() & 1 )
-        digitalWrite( PIN_PB5, 1 );    
-    else
-        digitalWrite( PIN_PB5, 0 );    
-
-
-    // Do something here with the rgb data perhaps
+    // red value is used to start track playback
+    // green value is the track number
+    if( iqGetRedValue() > 0 ) {
+        int trackNumber = iqGetGreenValue();
+        iqSetRedValue(0);
+        printf("play %03d\n", trackNumber );
+        AudioPlayTrack( trackNumber );
+      }
     
     // small delay
     delay(4);    

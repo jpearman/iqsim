@@ -62,6 +62,12 @@ iqGetRedValue()
 {
     return( MyIqData.red );
 }
+void
+iqSetRedValue(int value)
+{
+  MyIqData.red = value;
+}
+
 unsigned char
 iqGetGreenValue()
 {
